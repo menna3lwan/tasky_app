@@ -1,26 +1,27 @@
-# Tasky – Task Management Mobile App 
+# Tasky – Flutter Task Management App
 
 ## Overview
-**Tasky** is a modern and intuitive mobile application UI designed to help users manage, organize, and track their daily tasks efficiently. The design focuses on simplicity, clarity, and productivity, providing a smooth user experience from onboarding to task completion.
+**Tasky** is a modern task management mobile application built with **Flutter**, designed to help users organize, schedule, and track their daily tasks efficiently. The app follows a clean and intuitive UI to ensure a smooth and productive user experience across platforms.
 
 ## Features
-- User-friendly onboarding experience  
-- Secure login and registration screens  
-- Task creation, editing, and deletion  
+- Cross-platform support (Android & iOS) using Flutter  
+- Smooth onboarding experience  
+- User authentication (login & registration)  
+- Create, update, and delete tasks  
 - Calendar-based task scheduling  
-- Task prioritization and status tracking  
-- Clean, minimal, and consistent UI design  
+- Task prioritization and status management  
+- Clean, scalable, and maintainable Flutter UI architecture  
+
+## Technology Stack
+- **Flutter** (Dart)  
+- Material & Cupertino design principles  
+- Responsive layout for multiple screen sizes  
 
 ## Purpose
-This project serves as a UI/UX concept for a task management mobile application. It can be used as a design reference, prototype, or starting point for further development.
+This project serves as a Flutter-based task management application and can be used as a learning resource, UI reference, or foundation for building a production-ready productivity app.
 
-## Target Audience
-- Developers looking for a ready-made task management UI  
-- Designers seeking inspiration for productivity apps  
-- Product teams prototyping task or productivity solutions  
-
-## Status
-This repository contains **UI/UX design assets only** and does not include backend or production-ready functionality.
+## Project Status
+This repository currently focuses on **frontend implementation**. Backend integration and advanced features can be added in future updates.
 
 ## License
-This project is provided for educational and demonstration purposes.
+This project is intended for educational, personal, and demonstration use.
