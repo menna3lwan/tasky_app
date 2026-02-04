@@ -1,4 +1,4 @@
-# Tasky – Task Management Mobile App UI
+# Tasky – Task Management Mobile App 
 
 ## Overview
 **Tasky** is a modern and intuitive mobile application UI designed to help users manage, organize, and track their daily tasks efficiently. The design focuses on simplicity, clarity, and productivity, providing a smooth user experience from onboarding to task completion.
