@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import '../../utilities/constants/app_colors.dart';
-import '../../utilities/constants/app_dimensions.dart';
 import '../onboarding/onboarding_screen.dart';
 
-/// Splash screen that displays the app logo
+/// Splash screen that handles native splash preservation and navigation
 /// Following Single Responsibility Principle - only handles splash display and navigation
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,11 +16,13 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToOnboarding();
+    FlutterNativeSplash.remove();
+    _initialize();
   }
 
-  Future<void> _navigateToOnboarding() async {
+  Future<void> _initialize() async {
     await Future.delayed(const Duration(seconds: 2));
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -34,38 +36,26 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
-        child: Column(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Spacer(),
-            // App logo text: "Task" in white + "y" in yellow
-            RichText(
-              text: const TextSpan(
-                style: TextStyle(
-                  fontSize: AppDimensions.fontHeading,
-                  fontWeight: FontWeight.bold,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'Task',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  TextSpan(
-                    text: 'y',
-                    style: TextStyle(color: AppColors.splashYellow),
-                  ),
-                ],
+            // "Task" in white
+            const Text(
+              'Task',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
-            const Spacer(),
-            // Bottom indicator line
-            Container(
-              width: 60,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: AppDimensions.paddingXXL),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(2),
+            // "y" in yellow
+            Text(
+              'y',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: AppColors.splashYellow,
               ),
             ),
           ],
