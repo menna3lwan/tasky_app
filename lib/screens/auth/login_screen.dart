@@ -3,9 +3,9 @@ import '../../utilities/constants/app_colors.dart';
 import '../../utilities/constants/app_dimensions.dart';
 import '../../utilities/constants/app_strings.dart';
 import '../../utilities/services/auth_service.dart';
-import '../../utilities/validators/input_validators.dart';
+import '../../utilities/validators/validator.dart';
 import '../../widgets/buttons/primary_button.dart';
-import '../../widgets/inputs/custom_text_field.dart';
+import '../../widgets/inputs/custom_text_field.dart' hide Validator;
 import '../../widgets/loading/loading_overlay.dart';
 import '../home/home_screen.dart';
 import 'register_screen.dart';
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: AppStrings.enterUsername,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  validator: InputValidators.validateEmail,
+                  validator: Validator.validateEmail,
                 ),
                 const SizedBox(height: AppDimensions.paddingM),
                 // Password field
@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: AppStrings.enterPassword,
                   controller: _passwordController,
                   isPassword: true,
-                  validator: InputValidators.validatePassword,
+                  validator: Validator.validatePassword,
                 ),
                 const SizedBox(height: AppDimensions.paddingXL),
                 // Login button

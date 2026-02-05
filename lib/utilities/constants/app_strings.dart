@@ -28,8 +28,8 @@ abstract class AppStrings {
   static const String password = 'Password';
   static const String confirmPassword = 'Confirm Password';
   static const String username = 'Username';
-  static const String enterUsername = 'Enterusername..';
-  static const String enterPassword = 'Password..';
+  static const String enterUsername = 'Enter username..';
+  static const String enterPassword = 'Enter password..';
 
   // Auth navigation strings
   static const String noAccount = "Don't have an account? ";
@@ -37,7 +37,7 @@ abstract class AppStrings {
 
   // Validation messages
   static const String emailRequired = 'Email is required';
-  static const String emailInvalid = 'Please Entera valid email';
+  static const String emailInvalid = 'Please Enter a valid email';
   static const String passwordRequired = 'Password is required';
   static const String passwordTooShort =
       'Password must be at least 6 characters';

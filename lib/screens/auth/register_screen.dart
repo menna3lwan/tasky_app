@@ -3,9 +3,10 @@ import '../../utilities/constants/app_colors.dart';
 import '../../utilities/constants/app_dimensions.dart';
 import '../../utilities/constants/app_strings.dart';
 import '../../utilities/services/auth_service.dart';
-import '../../utilities/validators/input_validators.dart';
+import '../../utilities/validators/validator.dart';
 import '../../widgets/buttons/primary_button.dart';
 import '../../widgets/inputs/custom_text_field.dart';
+import '../../widgets/inputs/password_strength_indicator.dart';
 import '../../widgets/loading/loading_overlay.dart';
 import '../home/home_screen.dart';
 
@@ -25,9 +26,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
+  String _password = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_onPasswordChanged);
+  }
+
+  void _onPasswordChanged() {
+    setState(() {
+      _password = _passwordController.text;
+    });
+  }
 
   @override
   void dispose() {
+    _passwordController.removeListener(_onPasswordChanged);
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -104,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   title: AppStrings.username,
                   hintText: AppStrings.enterUsername,
                   controller: _usernameController,
-                  validator: InputValidators.validateUsername,
+                  validator: Validator.validateName,
                 ),
                 const SizedBox(height: AppDimensions.paddingM),
                 // Email field
@@ -113,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hintText: AppStrings.enterUsername,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  validator: InputValidators.validateEmail,
+                  validator: Validator.validateEmail,
                 ),
                 const SizedBox(height: AppDimensions.paddingM),
                 // Password field
@@ -122,8 +137,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hintText: AppStrings.enterPassword,
                   controller: _passwordController,
                   isPassword: true,
-                  validator: InputValidators.validatePassword,
+                  validator: Validator.validatePassword,
                 ),
+                // Password strength indicator
+                PasswordStrengthIndicator(password: _password),
                 const SizedBox(height: AppDimensions.paddingM),
                 // Confirm Password field
                 CustomTextField(
@@ -131,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hintText: AppStrings.enterPassword,
                   controller: _confirmPasswordController,
                   isPassword: true,
-                  validator: (value) => InputValidators.validateConfirmPassword(
+                  validator: (value) => Validator.validateConfirmPassword(
                     value,
                     _passwordController.text,
                   ),
