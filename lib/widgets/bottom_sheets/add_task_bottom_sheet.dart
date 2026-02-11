@@ -36,6 +36,8 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   int _selectedPriority = 1;
+  TaskCategory _selectedCategory = TaskCategory.personal;
+  TaskRecurrence _selectedRecurrence = TaskRecurrence.none;
 
   @override
   void dispose() {
@@ -103,6 +105,137 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
     }
   }
 
+  void _selectCategory() {
+    final responsive = context.responsive;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: responsive.spacing(mobile: 16, tablet: 20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: responsive.spacing(mobile: 20)),
+                child: Row(
+                  children: [
+                    Text(
+                      'Select Category',
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(mobile: 18, tablet: 20),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: responsive.spacing(mobile: 12)),
+              ...TaskCategory.values.map((category) {
+                final isSelected = _selectedCategory == category;
+                return ListTile(
+                  leading: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: category.color,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  title: Text(
+                    category.label,
+                    style: TextStyle(
+                      color: isSelected ? category.color : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected ? Icon(Icons.check, color: category.color) : null,
+                  onTap: () {
+                    setState(() => _selectedCategory = category);
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _selectRecurrence() {
+    final responsive = context.responsive;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: responsive.spacing(mobile: 16, tablet: 20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: responsive.spacing(mobile: 20)),
+                child: Row(
+                  children: [
+                    Text(
+                      'Repeat',
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(mobile: 18, tablet: 20),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: responsive.spacing(mobile: 12)),
+              ...TaskRecurrence.values.map((recurrence) {
+                final isSelected = _selectedRecurrence == recurrence;
+                IconData icon;
+                switch (recurrence) {
+                  case TaskRecurrence.none:
+                    icon = Icons.block;
+                    break;
+                  case TaskRecurrence.daily:
+                    icon = Icons.today;
+                    break;
+                  case TaskRecurrence.weekly:
+                    icon = Icons.date_range;
+                    break;
+                  case TaskRecurrence.monthly:
+                    icon = Icons.calendar_month;
+                    break;
+                }
+                return ListTile(
+                  leading: Icon(
+                    icon,
+                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  ),
+                  title: Text(
+                    recurrence.label,
+                    style: TextStyle(
+                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
+                  onTap: () {
+                    setState(() => _selectedRecurrence = recurrence);
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _submit() {
     if (_titleController.text.trim().isEmpty) return;
 
@@ -122,6 +255,8 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
           : _descriptionController.text.trim(),
       dateTime: dateTime,
       priority: _selectedPriority,
+      category: _selectedCategory,
+      recurrence: _selectedRecurrence,
     );
 
     Navigator.pop(context, task);
@@ -246,7 +381,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                       ),
                     ),
                   ),
-                  SizedBox(width: responsive.spacing(mobile: 12, tablet: 14)),
+                  SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
                   // Time picker icon
                   GestureDetector(
                     onTap: _selectTime,
@@ -263,7 +398,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                       ),
                     ),
                   ),
-                  SizedBox(width: responsive.spacing(mobile: 12, tablet: 14)),
+                  SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
                   // Flag icon for priority
                   GestureDetector(
                     onTap: _selectPriority,
@@ -276,6 +411,50 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                       child: Icon(
                         Icons.flag_outlined,
                         color: AppColors.textSecondary,
+                        size: iconSize,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
+                  // Category picker icon
+                  GestureDetector(
+                    onTap: _selectCategory,
+                    child: Container(
+                      padding: EdgeInsets.all(iconPadding),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: _selectedCategory.color.withAlpha(128)),
+                        borderRadius: BorderRadius.circular(10),
+                        color: _selectedCategory.color.withAlpha(25),
+                      ),
+                      child: Icon(
+                        Icons.category_outlined,
+                        color: _selectedCategory.color,
+                        size: iconSize,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
+                  // Recurrence picker icon
+                  GestureDetector(
+                    onTap: _selectRecurrence,
+                    child: Container(
+                      padding: EdgeInsets.all(iconPadding),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _selectedRecurrence != TaskRecurrence.none
+                              ? AppColors.primary.withAlpha(128)
+                              : const Color(0xFFE0E0E0),
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        color: _selectedRecurrence != TaskRecurrence.none
+                            ? AppColors.primary.withAlpha(25)
+                            : null,
+                      ),
+                      child: Icon(
+                        Icons.repeat,
+                        color: _selectedRecurrence != TaskRecurrence.none
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                         size: iconSize,
                       ),
                     ),
@@ -300,50 +479,68 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                 ],
               ),
               SizedBox(height: responsive.spacing(mobile: 12, tablet: 14)),
-              // Selected date and time display
+              // Selected options display
               Wrap(
-                spacing: responsive.spacing(mobile: 16, tablet: 20),
+                spacing: responsive.spacing(mobile: 12, tablet: 14),
                 runSpacing: responsive.spacing(mobile: 8, tablet: 10),
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.calendar_today, size: responsive.spacing(mobile: 14, tablet: 16), color: AppColors.textSecondary),
-                      SizedBox(width: responsive.spacing(mobile: 4, tablet: 6)),
-                      Text(
-                        _formatDate(_selectedDate),
-                        style: TextStyle(fontSize: responsive.fontSize(mobile: 12, tablet: 13), color: AppColors.textSecondary),
-                      ),
-                    ],
+                  _buildInfoChip(
+                    icon: Icons.calendar_today,
+                    label: _formatDate(_selectedDate),
+                    responsive: responsive,
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.access_time, size: responsive.spacing(mobile: 14, tablet: 16), color: AppColors.textSecondary),
-                      SizedBox(width: responsive.spacing(mobile: 4, tablet: 6)),
-                      Text(
-                        _formatTime(_selectedTime),
-                        style: TextStyle(fontSize: responsive.fontSize(mobile: 12, tablet: 13), color: AppColors.textSecondary),
-                      ),
-                    ],
+                  _buildInfoChip(
+                    icon: Icons.access_time,
+                    label: _formatTime(_selectedTime),
+                    responsive: responsive,
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.flag, size: responsive.spacing(mobile: 14, tablet: 16), color: AppColors.textSecondary),
-                      SizedBox(width: responsive.spacing(mobile: 4, tablet: 6)),
-                      Text(
-                        'Priority $_selectedPriority',
-                        style: TextStyle(fontSize: responsive.fontSize(mobile: 12, tablet: 13), color: AppColors.textSecondary),
-                      ),
-                    ],
+                  _buildInfoChip(
+                    icon: Icons.flag,
+                    label: 'Priority $_selectedPriority',
+                    responsive: responsive,
                   ),
+                  _buildInfoChip(
+                    icon: Icons.category,
+                    label: _selectedCategory.label,
+                    color: _selectedCategory.color,
+                    responsive: responsive,
+                  ),
+                  if (_selectedRecurrence != TaskRecurrence.none)
+                    _buildInfoChip(
+                      icon: Icons.repeat,
+                      label: _selectedRecurrence.label,
+                      color: AppColors.primary,
+                      responsive: responsive,
+                    ),
                 ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required ResponsiveHelper responsive,
+    Color? color,
+  }) {
+    final chipColor = color ?? AppColors.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: responsive.spacing(mobile: 14, tablet: 16), color: chipColor),
+        SizedBox(width: responsive.spacing(mobile: 4, tablet: 6)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: responsive.fontSize(mobile: 12, tablet: 13),
+            color: chipColor,
+          ),
+        ),
+      ],
     );
   }
 

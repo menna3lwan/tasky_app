@@ -1,6 +1,47 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+/// Task category enum with colors
+enum TaskCategory {
+  personal('Personal', Color(0xFF5F33E1)),
+  work('Work', Color(0xFF2196F3)),
+  study('Study', Color(0xFF4CAF50)),
+  health('Health', Color(0xFFE91E63)),
+  shopping('Shopping', Color(0xFFFF9800)),
+  other('Other', Color(0xFF9E9E9E));
+
+  final String label;
+  final Color color;
+
+  const TaskCategory(this.label, this.color);
+
+  static TaskCategory fromString(String? value) {
+    return TaskCategory.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => TaskCategory.personal,
+    );
+  }
+}
+
+/// Task recurrence enum
+enum TaskRecurrence {
+  none('None'),
+  daily('Daily'),
+  weekly('Weekly'),
+  monthly('Monthly');
+
+  final String label;
+
+  const TaskRecurrence(this.label);
+
+  static TaskRecurrence fromString(String? value) {
+    return TaskRecurrence.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => TaskRecurrence.none,
+    );
+  }
+}
+
 /// Task model representing a task in the app
 class TaskModel {
   final String? id;
@@ -9,6 +50,9 @@ class TaskModel {
   final DateTime dateTime;
   final int priority; // 1-10 priority levels
   final bool isCompleted;
+  final TaskCategory category;
+  final TaskRecurrence recurrence;
+  final DateTime? completedAt;
 
   TaskModel({
     this.id,
@@ -17,6 +61,9 @@ class TaskModel {
     required this.dateTime,
     this.priority = 1,
     this.isCompleted = false,
+    this.category = TaskCategory.personal,
+    this.recurrence = TaskRecurrence.none,
+    this.completedAt,
   });
 
   /// Get priority color based on value (1-10)
@@ -71,6 +118,33 @@ class TaskModel {
         dateTime.day == date.day;
   }
 
+  /// Get next occurrence date based on recurrence
+  DateTime? getNextOccurrence() {
+    if (recurrence == TaskRecurrence.none) return null;
+
+    DateTime next;
+    switch (recurrence) {
+      case TaskRecurrence.daily:
+        next = dateTime.add(const Duration(days: 1));
+        break;
+      case TaskRecurrence.weekly:
+        next = dateTime.add(const Duration(days: 7));
+        break;
+      case TaskRecurrence.monthly:
+        next = DateTime(
+          dateTime.year,
+          dateTime.month + 1,
+          dateTime.day,
+          dateTime.hour,
+          dateTime.minute,
+        );
+        break;
+      case TaskRecurrence.none:
+        return null;
+    }
+    return next;
+  }
+
   /// Create a copy with updated fields
   TaskModel copyWith({
     String? id,
@@ -79,6 +153,9 @@ class TaskModel {
     DateTime? dateTime,
     int? priority,
     bool? isCompleted,
+    TaskCategory? category,
+    TaskRecurrence? recurrence,
+    DateTime? completedAt,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -87,6 +164,9 @@ class TaskModel {
       dateTime: dateTime ?? this.dateTime,
       priority: priority ?? this.priority,
       isCompleted: isCompleted ?? this.isCompleted,
+      category: category ?? this.category,
+      recurrence: recurrence ?? this.recurrence,
+      completedAt: completedAt ?? this.completedAt,
     );
   }
 
@@ -98,6 +178,9 @@ class TaskModel {
       'dateTime': Timestamp.fromDate(dateTime),
       'priority': priority,
       'isCompleted': isCompleted,
+      'category': category.name,
+      'recurrence': recurrence.name,
+      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
     };
   }
 
@@ -111,6 +194,11 @@ class TaskModel {
       dateTime: (data['dateTime'] as Timestamp).toDate(),
       priority: data['priority'] ?? 1,
       isCompleted: data['isCompleted'] ?? false,
+      category: TaskCategory.fromString(data['category']),
+      recurrence: TaskRecurrence.fromString(data['recurrence']),
+      completedAt: data['completedAt'] != null
+          ? (data['completedAt'] as Timestamp).toDate()
+          : null,
     );
   }
 }

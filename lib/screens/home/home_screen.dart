@@ -4,11 +4,12 @@ import '../../utilities/constants/app_assets.dart';
 import '../../utilities/constants/app_colors.dart';
 import '../../utilities/helpers/responsive_helper.dart';
 import '../../utilities/models/task_model.dart';
-import '../../utilities/services/auth_service.dart';
+import '../../utilities/services/streak_service.dart';
 import '../../utilities/services/task_service.dart';
 import '../../widgets/bottom_sheets/add_task_bottom_sheet.dart';
 import '../../widgets/cards/task_card.dart';
-import '../auth/login_screen.dart';
+import '../profile/profile_screen.dart';
+import '../statistics/statistics_screen.dart';
 import '../task/task_detail_screen.dart';
 
 /// Home screen displaying task list with Firestore integration
@@ -20,18 +21,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _authService = AuthService();
   final _taskService = TaskService();
+  final _streakService = StreakService();
   final _searchController = TextEditingController();
 
   // Filter states
   String _dateFilter = 'All';
   int? _priorityFilter; // null means all priorities
+  TaskCategory? _categoryFilter; // null means all categories
   String _searchQuery = '';
   DateTime? _selectedDateFilter; // For specific date filtering
 
   // Store all tasks for priority tracking
   List<TaskModel> _allTasks = [];
+
+  // Streak data
+  StreakData? _streakData;
 
   final List<String> _dateFilterOptions = ['All', 'Today', 'Upcoming', 'Completed', 'Pick Date'];
 
@@ -39,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadStreakData();
   }
 
   @override
@@ -52,6 +58,13 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
     });
+  }
+
+  Future<void> _loadStreakData() async {
+    final streakData = await _streakService.getStreakData();
+    if (mounted) {
+      setState(() => _streakData = streakData);
+    }
   }
 
   /// Get used priorities from incomplete tasks
@@ -104,6 +117,11 @@ class _HomeScreenState extends State<HomeScreen> {
         return false;
       }
 
+      // Category filter
+      if (_categoryFilter != null && task.category != _categoryFilter) {
+        return false;
+      }
+
       return true;
     }).toList()
       // Sort by priority (high first) then by date
@@ -131,6 +149,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _toggleTaskComplete(TaskModel task) async {
     await _taskService.toggleTaskCompletion(task);
+    // Update streak when task is completed
+    if (!task.isCompleted) {
+      final updatedStreak = await _streakService.onTaskCompleted(_allTasks);
+      if (mounted) {
+        setState(() => _streakData = updatedStreak);
+      }
+    }
   }
 
   Future<void> _openTaskDetail(TaskModel task, Set<int> usedPriorities) async {
@@ -186,15 +211,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _logout() async {
-    await _authService.signOut();
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,6 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // Header
                 _buildHeader(responsive),
+                // Streak banner
+                _buildStreakBanner(responsive),
                 // Content with StreamBuilder for real-time updates
                 Expanded(
                   child: StreamBuilder<List<TaskModel>>(
@@ -261,7 +279,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeader(ResponsiveHelper responsive) {
     final titleSize = responsive.fontSize(mobile: 28, tablet: 32, desktop: 36);
-    final logoutSize = responsive.fontSize(mobile: 14, tablet: 15, desktop: 16);
     final horizontalPadding = responsive.spacing(mobile: 20, tablet: 24, desktop: 32);
 
     return Padding(
@@ -278,24 +295,114 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: _logout,
-            child: Row(
-              children: [
-                Icon(Icons.logout, color: AppColors.primary, size: responsive.spacing(mobile: 20, tablet: 22, desktop: 24)),
-                SizedBox(width: responsive.spacing(mobile: 4, tablet: 6)),
-                Text(
-                  'Log out',
-                  style: TextStyle(
-                    fontSize: logoutSize,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
-                  ),
+          Row(
+            children: [
+              // Statistics button
+              IconButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StatisticsScreen()),
                 ),
-              ],
-            ),
+                icon: Icon(
+                  Icons.bar_chart,
+                  color: AppColors.primary,
+                  size: responsive.spacing(mobile: 24, tablet: 26),
+                ),
+                tooltip: 'Statistics',
+              ),
+              // Profile button
+              IconButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                ),
+                icon: Icon(
+                  Icons.person_outline,
+                  color: AppColors.primary,
+                  size: responsive.spacing(mobile: 24, tablet: 26),
+                ),
+                tooltip: 'Profile',
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStreakBanner(ResponsiveHelper responsive) {
+    if (_streakData == null || _streakData!.currentStreak == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final horizontalPadding = responsive.spacing(mobile: 20, tablet: 24, desktop: 32);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: horizontalPadding,
+        right: horizontalPadding,
+        bottom: responsive.spacing(mobile: 12, tablet: 16),
+      ),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.spacing(mobile: 16, tablet: 20),
+          vertical: responsive.spacing(mobile: 12, tablet: 14),
+        ),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF9800).withAlpha(51),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.local_fire_department,
+              color: Colors.white,
+              size: responsive.spacing(mobile: 28, tablet: 32),
+            ),
+            SizedBox(width: responsive.spacing(mobile: 12, tablet: 14)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_streakData!.currentStreak} Day Streak!',
+                    style: TextStyle(
+                      fontSize: responsive.fontSize(mobile: 16, tablet: 18),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'Keep up the great work!',
+                    style: TextStyle(
+                      fontSize: responsive.fontSize(mobile: 12, tablet: 13),
+                      color: Colors.white.withAlpha(204),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              'Best: ${_streakData!.longestStreak}',
+              style: TextStyle(
+                fontSize: responsive.fontSize(mobile: 12, tablet: 13),
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withAlpha(230),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -403,124 +510,81 @@ class _HomeScreenState extends State<HomeScreen> {
         // Filters row
         Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-          child: Row(
-            children: [
-              // Date filter dropdown
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.spacing(mobile: 12, tablet: 14),
-                    vertical: responsive.spacing(mobile: 4, tablet: 6),
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE0E0E0)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _dateFilter,
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                      isDense: true,
-                      isExpanded: true,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        color: AppColors.textPrimary,
-                      ),
-                      items: _dateFilterOptions.map((option) {
-                        String displayText = option;
-                        // Show selected date for "Pick Date" option
-                        if (option == 'Pick Date' && _selectedDateFilter != null && _dateFilter == 'Pick Date') {
-                          displayText = _formatFilterDate(_selectedDateFilter!);
-                        }
-                        return DropdownMenuItem<String>(
-                          value: option,
-                          child: Row(
-                            children: [
-                              Icon(
-                                option == 'Pick Date' ? Icons.date_range : Icons.calendar_today,
-                                size: responsive.spacing(mobile: 16, tablet: 18),
-                                color: AppColors.textSecondary,
-                              ),
-                              SizedBox(width: responsive.spacing(mobile: 8)),
-                              Expanded(
-                                child: Text(
-                                  displayText,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value == 'Pick Date') {
-                          _pickFilterDate();
-                        } else if (value != null) {
-                          setState(() {
-                            _dateFilter = value;
-                            _selectedDateFilter = null;
-                          });
-                        }
-                      },
-                    ),
-                  ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // Date filter dropdown
+                _buildFilterChip(
+                  label: _dateFilter == 'Pick Date' && _selectedDateFilter != null
+                      ? _formatFilterDate(_selectedDateFilter!)
+                      : _dateFilter,
+                  icon: Icons.calendar_today,
+                  isActive: _dateFilter != 'All',
+                  onTap: () => _showDateFilterMenu(responsive),
+                  responsive: responsive,
                 ),
-              ),
-              SizedBox(width: responsive.spacing(mobile: 12, tablet: 16)),
-              // Priority filter dropdown
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.spacing(mobile: 12, tablet: 14),
-                    vertical: responsive.spacing(mobile: 4, tablet: 6),
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE0E0E0)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: _priorityFilter,
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                      isDense: true,
-                      isExpanded: true,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        color: AppColors.textPrimary,
+                SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
+                // Priority filter
+                _buildFilterChip(
+                  label: _priorityFilter != null ? 'Priority $_priorityFilter' : 'Priority',
+                  icon: Icons.flag_outlined,
+                  isActive: _priorityFilter != null,
+                  onTap: () => _showPriorityFilterMenu(responsive),
+                  responsive: responsive,
+                ),
+                SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
+                // Category filter
+                _buildFilterChip(
+                  label: _categoryFilter?.label ?? 'Category',
+                  icon: Icons.category_outlined,
+                  isActive: _categoryFilter != null,
+                  color: _categoryFilter?.color,
+                  onTap: () => _showCategoryFilterMenu(responsive),
+                  responsive: responsive,
+                ),
+                // Clear filters button
+                if (_dateFilter != 'All' || _priorityFilter != null || _categoryFilter != null) ...[
+                  SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _dateFilter = 'All';
+                        _priorityFilter = null;
+                        _categoryFilter = null;
+                        _selectedDateFilter = null;
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.spacing(mobile: 12, tablet: 14),
+                        vertical: responsive.spacing(mobile: 8, tablet: 10),
                       ),
-                      items: [
-                        DropdownMenuItem<int?>(
-                          value: null,
-                          child: Row(
-                            children: [
-                              Icon(Icons.flag_outlined, size: responsive.spacing(mobile: 16, tablet: 18), color: AppColors.textSecondary),
-                              SizedBox(width: responsive.spacing(mobile: 8)),
-                              const Text('All Priorities'),
-                            ],
-                          ),
-                        ),
-                        ...List.generate(10, (index) {
-                          final priority = index + 1;
-                          return DropdownMenuItem<int?>(
-                            value: priority,
-                            child: Row(
-                              children: [
-                                Icon(Icons.flag, size: responsive.spacing(mobile: 16, tablet: 18), color: AppColors.primary),
-                                SizedBox(width: responsive.spacing(mobile: 8)),
-                                Text('Priority $priority'),
-                              ],
+                      decoration: BoxDecoration(
+                        color: Colors.red.withAlpha(25),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.red.withAlpha(76)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.clear, size: responsive.spacing(mobile: 16, tablet: 18), color: Colors.red),
+                          SizedBox(width: responsive.spacing(mobile: 4)),
+                          Text(
+                            'Clear',
+                            style: TextStyle(
+                              fontSize: responsive.fontSize(mobile: 12, tablet: 13),
+                              color: Colors.red,
+                              fontWeight: FontWeight.w500,
                             ),
-                          );
-                        }),
-                      ],
-                      onChanged: (value) {
-                        setState(() => _priorityFilter = value);
-                      },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              ],
+            ),
           ),
         ),
         SizedBox(height: responsive.spacing(mobile: 16, tablet: 20)),
@@ -579,6 +643,271 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+    required ResponsiveHelper responsive,
+    Color? color,
+  }) {
+    final chipColor = color ?? AppColors.primary;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.spacing(mobile: 12, tablet: 14),
+          vertical: responsive.spacing(mobile: 8, tablet: 10),
+        ),
+        decoration: BoxDecoration(
+          color: isActive ? chipColor.withAlpha(25) : const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? chipColor.withAlpha(128) : const Color(0xFFE0E0E0),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: responsive.spacing(mobile: 16, tablet: 18),
+              color: isActive ? chipColor : AppColors.textSecondary,
+            ),
+            SizedBox(width: responsive.spacing(mobile: 6, tablet: 8)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: responsive.fontSize(mobile: 12, tablet: 13),
+                color: isActive ? chipColor : AppColors.textSecondary,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            SizedBox(width: responsive.spacing(mobile: 4)),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: responsive.spacing(mobile: 16, tablet: 18),
+              color: isActive ? chipColor : AppColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDateFilterMenu(ResponsiveHelper responsive) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: responsive.spacing(mobile: 16, tablet: 20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: responsive.spacing(mobile: 20)),
+                child: Row(
+                  children: [
+                    Text(
+                      'Filter by Date',
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(mobile: 18, tablet: 20),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: responsive.spacing(mobile: 12)),
+              ..._dateFilterOptions.map((option) {
+                final isSelected = _dateFilter == option;
+                return ListTile(
+                  leading: Icon(
+                    option == 'Pick Date' ? Icons.date_range : Icons.calendar_today,
+                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  ),
+                  title: Text(
+                    option == 'Pick Date' && _selectedDateFilter != null && _dateFilter == 'Pick Date'
+                        ? _formatFilterDate(_selectedDateFilter!)
+                        : option,
+                    style: TextStyle(
+                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
+                  onTap: () {
+                    Navigator.pop(context);
+                    if (option == 'Pick Date') {
+                      _pickFilterDate();
+                    } else {
+                      setState(() {
+                        _dateFilter = option;
+                        _selectedDateFilter = null;
+                      });
+                    }
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPriorityFilterMenu(ResponsiveHelper responsive) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: responsive.spacing(mobile: 16, tablet: 20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: responsive.spacing(mobile: 20)),
+                child: Row(
+                  children: [
+                    Text(
+                      'Filter by Priority',
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(mobile: 18, tablet: 20),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: responsive.spacing(mobile: 12)),
+              ListTile(
+                leading: const Icon(Icons.flag_outlined, color: AppColors.textSecondary),
+                title: const Text('All Priorities'),
+                trailing: _priorityFilter == null ? const Icon(Icons.check, color: AppColors.primary) : null,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _priorityFilter = null);
+                },
+              ),
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  itemCount: 10,
+                  itemBuilder: (context, index) {
+                    final priority = index + 1;
+                    final isSelected = _priorityFilter == priority;
+                    return ListTile(
+                      leading: Icon(Icons.flag, color: _getPriorityColor(priority)),
+                      title: Text(
+                        'Priority $priority',
+                        style: TextStyle(
+                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                      trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() => _priorityFilter = priority);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryFilterMenu(ResponsiveHelper responsive) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: responsive.spacing(mobile: 16, tablet: 20)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: responsive.spacing(mobile: 20)),
+                child: Row(
+                  children: [
+                    Text(
+                      'Filter by Category',
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(mobile: 18, tablet: 20),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: responsive.spacing(mobile: 12)),
+              ListTile(
+                leading: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
+                title: const Text('All Categories'),
+                trailing: _categoryFilter == null ? const Icon(Icons.check, color: AppColors.primary) : null,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _categoryFilter = null);
+                },
+              ),
+              ...TaskCategory.values.map((category) {
+                final isSelected = _categoryFilter == category;
+                return ListTile(
+                  leading: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: category.color,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  title: Text(
+                    category.label,
+                    style: TextStyle(
+                      color: isSelected ? category.color : AppColors.textPrimary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected ? Icon(Icons.check, color: category.color) : null,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _categoryFilter = category);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getPriorityColor(int priority) {
+    if (priority <= 3) {
+      return const Color(0xFF5F33E1);
+    } else if (priority <= 6) {
+      return const Color(0xFFFFA726);
+    } else if (priority <= 8) {
+      return const Color(0xFFFF5722);
+    } else {
+      return const Color(0xFFE53935);
+    }
+  }
+
   Widget _buildNoResultsState(ResponsiveHelper responsive) {
     return Center(
       child: Column(
@@ -604,6 +933,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _searchController.clear();
                 _dateFilter = 'All';
                 _priorityFilter = null;
+                _categoryFilter = null;
                 _selectedDateFilter = null;
               });
             },

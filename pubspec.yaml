@@ -45,6 +45,21 @@ dependencies:
   # Native splash screen
   flutter_native_splash: ^2.4.4
 
+  # Charts for statistics
+  fl_chart: ^0.70.2
+
+  # Image picker for profile
+  image_picker: ^1.1.2
+
+  # Firebase Storage for profile images
+  firebase_storage: ^12.4.4
+
+  # Shared preferences for local data
+  shared_preferences: ^2.3.5
+
+  # Permission handler
+  permission_handler: ^11.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -36,6 +36,16 @@ class TaskCard extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Category color indicator
+            Container(
+              width: responsive.spacing(mobile: 4, tablet: 5),
+              height: responsive.spacing(mobile: 48, tablet: 52),
+              decoration: BoxDecoration(
+                color: task.category.color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(width: responsive.spacing(mobile: 12, tablet: 14)),
             // Checkbox
             GestureDetector(
               onTap: onToggleComplete,
@@ -61,28 +71,68 @@ class TaskCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    task.title,
-                    style: TextStyle(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w500,
-                      color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
-                      decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w500,
+                            color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // Recurrence indicator
+                      if (task.recurrence != TaskRecurrence.none) ...[
+                        SizedBox(width: responsive.spacing(mobile: 6, tablet: 8)),
+                        Icon(
+                          Icons.repeat,
+                          size: responsive.spacing(mobile: 14, tablet: 16),
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ],
                   ),
                   SizedBox(height: responsive.spacing(mobile: 4, tablet: 6)),
-                  Text(
-                    _formatDateTime(task.dateTime),
-                    style: TextStyle(
-                      fontSize: subtitleSize,
-                      color: task.isOverdue ? Colors.red : AppColors.textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        _formatDateTime(task.dateTime),
+                        style: TextStyle(
+                          fontSize: subtitleSize,
+                          color: task.isOverdue ? Colors.red : AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
+                      // Category chip
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: responsive.spacing(mobile: 6, tablet: 8),
+                          vertical: responsive.spacing(mobile: 2, tablet: 3),
+                        ),
+                        decoration: BoxDecoration(
+                          color: task.category.color.withAlpha(25),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          task.category.label,
+                          style: TextStyle(
+                            fontSize: responsive.fontSize(mobile: 10, tablet: 11),
+                            color: task.category.color,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            SizedBox(width: responsive.spacing(mobile: 8, tablet: 10)),
             // Priority badge with flag and number
             Container(
               padding: EdgeInsets.symmetric(
@@ -90,9 +140,9 @@ class TaskCard extends StatelessWidget {
                 vertical: responsive.spacing(mobile: 8, tablet: 10),
               ),
               decoration: BoxDecoration(
-                color: AppColors.primary.withAlpha(25),
+                color: task.priorityColor.withAlpha(25),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.primary.withAlpha(76)),
+                border: Border.all(color: task.priorityColor.withAlpha(76)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -100,7 +150,7 @@ class TaskCard extends StatelessWidget {
                   Icon(
                     Icons.flag_outlined,
                     size: responsive.spacing(mobile: 16, tablet: 18),
-                    color: AppColors.primary,
+                    color: task.priorityColor,
                   ),
                   SizedBox(width: responsive.spacing(mobile: 4, tablet: 6)),
                   Text(
@@ -108,7 +158,7 @@ class TaskCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: subtitleSize,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: task.priorityColor,
                     ),
                   ),
                 ],
