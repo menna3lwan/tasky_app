@@ -10,6 +10,9 @@ abstract class AppAssets {
   static const String onboarding2 = '$_imagesPath/onboarding_2.png';
   static const String onboarding3 = '$_imagesPath/onboarding_3.png';
 
+  // Empty state image
+  static const String emptyTasks = '$_imagesPath/empty_tasks.png';
+
   // Animations
   static const String loadingAnimation = '$_iconsPath/Loading animation blue.json';
 }

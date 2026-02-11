@@ -8,10 +8,7 @@ import '../../../utilities/models/onboarding_model.dart';
 class OnboardingPageContent extends StatelessWidget {
   final OnboardingModel data;
 
-  const OnboardingPageContent({
-    super.key,
-    required this.data,
-  });
+  const OnboardingPageContent({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +31,7 @@ class OnboardingPageContent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppDimensions.radiusL),
                 ),
                 child: const Center(
-                  child: Icon(
-                    Icons.image,
-                    size: 80,
-                    color: AppColors.primary,
-                  ),
+                  child: Icon(Icons.image, size: 80, color: AppColors.primary),
                 ),
               );
             },

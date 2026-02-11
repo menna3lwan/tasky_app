@@ -15,63 +15,40 @@ class PasswordStrengthIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final strength = Validator.getPasswordStrength(password);
     final hasValidChars = Validator.hasValidCharsOnly(password);
+    final isValid = strength == 4 && hasValidChars;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Strength bars
         Row(
           children: List.generate(4, (index) {
+            final isActive = index < strength && hasValidChars;
             return Expanded(
               child: Container(
-                margin: EdgeInsets.only(right: index < 3 ? 4 : 0),
-                height: 4,
+                margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
+                height: 6,
                 decoration: BoxDecoration(
-                  color: index < strength && hasValidChars
-                      ? _getStrengthColor(strength)
-                      : const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(2),
+                  color: isActive ? Colors.green : const Color(0xFFE0E0E0),
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
             );
           }),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Requirements text
         Text(
           'Min. 8 characters, 1 lowercase, 1 uppercase and 1 number. ONLY the following special characters are allowed: !@#\$%^',
           style: TextStyle(
             fontSize: 12,
-            color: _getTextColor(strength, hasValidChars),
+            fontWeight: FontWeight.w400,
+            color: isValid ? Colors.green : const Color(0xFFFF4949),
+            height: 1.4,
           ),
         ),
       ],
     );
-  }
-
-  Color _getStrengthColor(int strength) {
-    switch (strength) {
-      case 1:
-        return Colors.red;
-      case 2:
-        return Colors.orange;
-      case 3:
-        return Colors.yellow.shade700;
-      case 4:
-        return Colors.green;
-      default:
-        return const Color(0xFFE0E0E0);
-    }
-  }
-
-  Color _getTextColor(int strength, bool hasValidChars) {
-    if (!hasValidChars) {
-      return Colors.red;
-    }
-    if (strength == 4) {
-      return Colors.green;
-    }
-    return Colors.red;
   }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import '../../utilities/constants/app_colors.dart';
+import '../../utilities/helpers/responsive_helper.dart';
+import '../../utilities/services/auth_service.dart';
+import '../home/home_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 
-/// Splash screen that handles native splash preservation and navigation
 /// Following Single Responsibility Principle - only handles splash display and navigation
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +15,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
@@ -24,15 +28,28 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      // Check if user is already logged in
+      if (_authService.isLoggedIn) {
+        // Auto login - redirect to home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // Not logged in - show onboarding
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final fontSize = responsive.fontSize(mobile: 48, tablet: 56, desktop: 64);
+
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
@@ -40,20 +57,20 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // "Task" in white
-            const Text(
-              'Task',
+            // "Taskat" in white
+            Text(
+              'Taskat',
               style: TextStyle(
-                fontSize: 48,
+                fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            // "y" in yellow
+            // "k" in yellow
             Text(
-              'y',
+              'k',
               style: TextStyle(
-                fontSize: 48,
+                fontSize: fontSize,
                 fontWeight: FontWeight.bold,
                 color: AppColors.splashYellow,
               ),

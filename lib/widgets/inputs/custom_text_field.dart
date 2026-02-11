@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Validator type definition
-typedef Validator = String? Function(String?);
+/// Validator function type definition
+typedef ValidatorFunction = String? Function(String?);
 
 /// A reusable custom text field widget following Single Responsibility Principle
 /// This widget is responsible only for rendering a styled text input field
@@ -11,7 +11,7 @@ class CustomTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final bool isPassword;
   final TextEditingController controller;
-  final Validator? validator;
+  final ValidatorFunction? validator;
 
   const CustomTextField({
     required this.title,

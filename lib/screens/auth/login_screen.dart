@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import '../../utilities/constants/app_colors.dart';
 import '../../utilities/constants/app_dimensions.dart';
 import '../../utilities/constants/app_strings.dart';
+import '../../utilities/helpers/responsive_helper.dart';
 import '../../utilities/services/auth_service.dart';
 import '../../utilities/validators/validator.dart';
 import '../../widgets/buttons/primary_button.dart';
-import '../../widgets/inputs/custom_text_field.dart' hide Validator;
+import '../../widgets/inputs/custom_text_field.dart';
 import '../../widgets/loading/loading_overlay.dart';
 import '../home/home_screen.dart';
 import 'register_screen.dart';
@@ -78,77 +79,87 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final padding = responsive.spacing(mobile: AppDimensions.paddingL, tablet: 32, desktop: 40);
+    final titleSize = responsive.fontSize(mobile: AppDimensions.fontHeading, tablet: 34, desktop: 38);
+    final labelSize = responsive.fontSize(mobile: AppDimensions.fontM, tablet: 15, desktop: 16);
+
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimensions.paddingL),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: AppDimensions.paddingXXL),
-                // Title
-                const Text(
-                  AppStrings.login,
-                  style: TextStyle(
-                    fontSize: AppDimensions.fontHeading,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.paddingXXL),
-                // Email field
-                CustomTextField(
-                  title: AppStrings.email,
-                  hintText: AppStrings.enterUsername,
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: Validator.validateEmail,
-                ),
-                const SizedBox(height: AppDimensions.paddingM),
-                // Password field
-                CustomTextField(
-                  title: AppStrings.password,
-                  hintText: AppStrings.enterPassword,
-                  controller: _passwordController,
-                  isPassword: true,
-                  validator: Validator.validatePassword,
-                ),
-                const SizedBox(height: AppDimensions.paddingXL),
-                // Login button
-                PrimaryButton(
-                  text: AppStrings.login,
-                  onPressed: _handleLogin,
-                ),
-                const SizedBox(height: AppDimensions.paddingXXL * 2),
-                // Register link
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        AppStrings.noAccount,
-                        style: TextStyle(
-                          fontSize: AppDimensions.fontM,
-                          color: AppColors.textSecondary,
-                        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(padding),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: responsive.contentMaxWidth),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: responsive.spacing(mobile: AppDimensions.paddingXXL, tablet: 48)),
+                    // Title
+                    Text(
+                      AppStrings.login,
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
                       ),
-                      GestureDetector(
-                        onTap: _navigateToRegister,
-                        child: const Text(
-                          AppStrings.register,
-                          style: TextStyle(
-                            fontSize: AppDimensions.fontM,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
+                    ),
+                    SizedBox(height: responsive.spacing(mobile: AppDimensions.paddingXXL, tablet: 40)),
+                    // Email field
+                    CustomTextField(
+                      title: AppStrings.email,
+                      hintText: AppStrings.enterUsername,
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: Validator.validateEmail,
+                    ),
+                    SizedBox(height: responsive.spacing(mobile: AppDimensions.paddingM, tablet: 20)),
+                    // Password field
+                    CustomTextField(
+                      title: AppStrings.password,
+                      hintText: AppStrings.enterPassword,
+                      controller: _passwordController,
+                      isPassword: true,
+                      validator: Validator.validatePassword,
+                    ),
+                    SizedBox(height: responsive.spacing(mobile: AppDimensions.paddingXL, tablet: 28)),
+                    // Login button
+                    PrimaryButton(
+                      text: AppStrings.login,
+                      onPressed: _handleLogin,
+                    ),
+                    SizedBox(height: responsive.spacing(mobile: AppDimensions.paddingXXL * 2, tablet: 64)),
+                    // Register link
+                    Center(
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          Text(
+                            AppStrings.noAccount,
+                            style: TextStyle(
+                              fontSize: labelSize,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                        ),
+                          GestureDetector(
+                            onTap: _navigateToRegister,
+                            child: Text(
+                              AppStrings.register,
+                              style: TextStyle(
+                                fontSize: labelSize,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

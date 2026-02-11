@@ -1,5 +1,5 @@
-name: tasky_app
-description: "A new Flutter project."
+name: taskatk_app
+description: "Taskatk - A task management app."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,9 +34,10 @@ dependencies:
   # Material icons
   cupertino_icons: ^1.0.8
 
-  # Firebase Auth only
+  # Firebase
   firebase_core: ^3.8.1
   firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.5
 
   # Lottie for animations
   lottie: ^3.3.1
