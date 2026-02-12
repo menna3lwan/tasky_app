@@ -16,6 +16,21 @@ class AuthService {
 
   /// Sign in with email and password
   Future<AuthResult> signInWithEmailAndPassword({
+    /*
+1️⃣ User يضغط Login
+   ↓
+2️⃣ AuthService.signIn()
+   ↓
+3️⃣ Firebase SDK
+   ↓
+4️⃣ السيرفر يتحقق من البيانات
+   ↓
+5️⃣ لو صحيحة:
+      ينشئ Session Token
+   ↓
+6️⃣ يرجع User
+    
+     */
     required String email,
     required String password,
   }) async {
@@ -34,6 +49,26 @@ class AuthService {
 
   /// Register with email and password
   Future<AuthResult> registerWithEmailAndPassword({
+    /*
+1️⃣ User يدخل Email + Password
+   ↓
+2️⃣ AuthService.register()
+   ↓
+3️⃣ _auth.createUserWithEmailAndPassword()
+   ↓
+4️⃣ Firebase SDK
+   ↓
+5️⃣ HTTPS request للسيرفر
+   ↓
+6️⃣ السيرفر ينشئ User Record
+   ↓
+7️⃣ يولد UID
+   ↓
+8️⃣ يرجع UserCredential
+
+    
+    
+     */
     required String email,
     required String password,
     required String username,

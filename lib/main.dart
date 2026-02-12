@@ -26,3 +26,19 @@ class TaskyApp extends StatelessWidget {
     );
   }
 }
+/*
+User taps app icon
+        ↓
+Flutter Engine starts
+        ↓
+ensureInitialized()
+        ↓
+initializeApp()
+        ↓
+Connect to Firebase
+        ↓
+Create FirebaseApp instance
+        ↓
+runApp()
+
+ */

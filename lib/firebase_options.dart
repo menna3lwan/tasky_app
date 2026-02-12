@@ -43,3 +43,14 @@ class DefaultFirebaseOptions {
     storageBucket: 'tasky-cbcb4.firebasestorage.app',
   );
 }
+/*
+
+firebase_options.dart
+       ↓
+يحدد مشروع Firebase
+       ↓
+initializeApp يستخدمه
+       ↓
+الاتصال يتم بالمشروع الصحيح
+
+ */
