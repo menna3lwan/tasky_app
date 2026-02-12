@@ -12,12 +12,14 @@ class CustomTextField extends StatefulWidget {
   final bool isPassword;
   final TextEditingController controller;
   final ValidatorFunction? validator;
+  final ValueChanged<String>? onChanged;
 
   const CustomTextField({
     required this.title,
     required this.hintText,
     required this.controller,
     this.validator,
+    this.onChanged,
     this.keyboardType = TextInputType.text,
     this.isPassword = false,
     super.key,
@@ -95,6 +97,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           keyboardType: widget.keyboardType,
           controller: widget.controller,
           validator: widget.validator,
+          onChanged: widget.onChanged,
         ),
       ],
     );

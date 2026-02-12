@@ -33,34 +33,38 @@ class TaskService {
     }
   }
 
-  /// Get all tasks as stream (real-time updates) ordered by date
-  Stream<List<TaskModel>> getTasksStream() {
-    if (_userId == null) return Stream.value([]);
+  /// Get all tasks ordered by date
+  Future<List<TaskModel>> getTasks() async {
+    if (_userId == null) return [];
 
-    return _tasksCollection
-        .orderBy('dateTime', descending: false)
-        .snapshots()
-        .map((snapshot) {
+    try {
+      final snapshot = await _tasksCollection
+          .orderBy('dateTime', descending: false)
+          .get();
       return snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList();
-    });
+    } catch (e) {
+      return [];
+    }
   }
 
   /// Get today's tasks
-  Stream<List<TaskModel>> getTodayTasksStream() {
-    if (_userId == null) return Stream.value([]);
+  Future<List<TaskModel>> getTodayTasks() async {
+    if (_userId == null) return [];
 
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+    try {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    return _tasksCollection
-        .where('dateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('dateTime', isLessThan: Timestamp.fromDate(endOfDay))
-        .orderBy('dateTime')
-        .snapshots()
-        .map((snapshot) {
+      final snapshot = await _tasksCollection
+          .where('dateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('dateTime', isLessThan: Timestamp.fromDate(endOfDay))
+          .orderBy('dateTime')
+          .get();
       return snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList();
-    });
+    } catch (e) {
+      return [];
+    }
   }
 
   /// Get completed tasks for statistics

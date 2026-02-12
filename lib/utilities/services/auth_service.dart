@@ -8,9 +8,6 @@ class AuthService {
   // Get current user
   User? get currentUser => _firebaseAuth.currentUser;
 
-  // Auth state stream
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
-
   // Check if user is logged in
   bool get isLoggedIn => currentUser != null;
 

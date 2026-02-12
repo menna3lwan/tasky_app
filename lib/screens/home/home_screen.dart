@@ -35,6 +35,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Store all tasks for priority tracking
   List<TaskModel> _allTasks = [];
 
+  // Loading state
+  bool _isLoading = true;
+
   // Streak data
   StreakData? _streakData;
 
@@ -43,28 +46,34 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);
-    _loadStreakData();
+    _loadData();
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged() {
-    setState(() {
-      _searchQuery = _searchController.text.toLowerCase();
-    });
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+
+    final tasks = await _taskService.getTasks();
+    final streakData = await _streakService.getStreakData();
+
+    if (mounted) {
+      setState(() {
+        _allTasks = tasks;
+        _streakData = streakData;
+        _isLoading = false;
+      });
+    }
   }
 
-  Future<void> _loadStreakData() async {
-    final streakData = await _streakService.getStreakData();
-    if (mounted) {
-      setState(() => _streakData = streakData);
-    }
+  void _onSearchChanged(String value) {
+    setState(() {
+      _searchQuery = value.toLowerCase();
+    });
   }
 
   /// Get used priorities from incomplete tasks
@@ -136,13 +145,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final task = await AddTaskBottomSheet.show(context, usedPriorities: usedPriorities);
     if (task != null) {
       final result = await _taskService.createTask(task);
-      if (mounted && !result.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.errorMessage ?? 'Failed to create task'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (mounted) {
+        if (result.isSuccess) {
+          _loadData();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.errorMessage ?? 'Failed to create task'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -151,10 +164,10 @@ class _HomeScreenState extends State<HomeScreen> {
     await _taskService.toggleTaskCompletion(task);
     // Update streak when task is completed
     if (!task.isCompleted) {
-      final updatedStreak = await _streakService.onTaskCompleted(_allTasks);
-      if (mounted) {
-        setState(() => _streakData = updatedStreak);
-      }
+      await _streakService.onTaskCompleted(_allTasks);
+    }
+    if (mounted) {
+      _loadData();
     }
   }
 
@@ -179,6 +192,10 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       } else if (action == 'update') {
         await _taskService.updateTask(updatedTask);
+      }
+
+      if (mounted) {
+        _loadData();
       }
     }
   }
@@ -229,40 +246,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHeader(responsive),
                 // Streak banner
                 _buildStreakBanner(responsive),
-                // Content with StreamBuilder for real-time updates
+                // Content
                 Expanded(
-                  child: StreamBuilder<List<TaskModel>>(
-                    stream: _taskService.getTasksStream(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
+                  child: _isLoading
+                      ? const Center(
                           child: CircularProgressIndicator(color: AppColors.primary),
-                        );
-                      }
-
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error_outline, size: responsive.iconSize * 2, color: Colors.red),
-                              SizedBox(height: responsive.spacing(mobile: 16)),
-                              Text('Error: ${snapshot.error}'),
-                            ],
-                          ),
-                        );
-                      }
-
-                      final tasks = snapshot.data ?? [];
-                      _allTasks = tasks; // Store for priority tracking
-
-                      if (tasks.isEmpty) {
-                        return _buildEmptyState(responsive);
-                      }
-
-                      return _buildTaskList(tasks, responsive);
-                    },
-                  ),
+                        )
+                      : _allTasks.isEmpty
+                          ? _buildEmptyState(responsive)
+                          : _buildTaskList(_allTasks, responsive),
                 ),
               ],
             ),
@@ -492,6 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: TextField(
               controller: _searchController,
+              onChanged: _onSearchChanged,
               style: TextStyle(fontSize: fontSize),
               decoration: InputDecoration(
                 hintText: 'Search for your task...',

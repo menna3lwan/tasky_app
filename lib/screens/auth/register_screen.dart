@@ -32,28 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _confirmPassword = '';
 
   @override
-  void initState() {
-    super.initState();
-    _passwordController.addListener(_onPasswordChanged);
-    _confirmPasswordController.addListener(_onConfirmPasswordChanged);
-  }
-
-  void _onPasswordChanged() {
-    setState(() {
-      _password = _passwordController.text;
-    });
-  }
-
-  void _onConfirmPasswordChanged() {
-    setState(() {
-      _confirmPassword = _confirmPasswordController.text;
-    });
-  }
-
-  @override
   void dispose() {
-    _passwordController.removeListener(_onPasswordChanged);
-    _confirmPasswordController.removeListener(_onConfirmPasswordChanged);
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -161,6 +140,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _passwordController,
                       isPassword: true,
                       validator: Validator.validatePassword,
+                      onChanged: (value) {
+                        setState(() => _password = value);
+                      },
                     ),
                     // Password strength indicator
                     PasswordStrengthIndicator(password: _password),
@@ -175,6 +157,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         value,
                         _passwordController.text,
                       ),
+                      onChanged: (value) {
+                        setState(() => _confirmPassword = value);
+                      },
                     ),
                     // Password confirmation indicator
                     PasswordConfirmIndicator(

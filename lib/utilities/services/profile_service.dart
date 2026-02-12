@@ -113,18 +113,6 @@ class ProfileService {
     }
   }
 
-  /// Get profile stream for real-time updates
-  Stream<UserProfile?> getProfileStream() {
-    if (_userId == null) return Stream.value(null);
-
-    return _profileDoc.snapshots().map((doc) {
-      if (doc.exists) {
-        return UserProfile.fromFirestore(doc);
-      }
-      return null;
-    });
-  }
-
   /// Update profile display name
   Future<ProfileResult> updateDisplayName(String displayName) async {
     if (_userId == null) {
