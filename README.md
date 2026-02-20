@@ -50,7 +50,7 @@ The application follows **Clean Architecture principles**, ensuring:
 ## App Demo
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/menna3lwan/tasky_app/main/video_2026-02-20_12-47-44-ezgif.com-video-to-gif-converter.gif" width="350" alt="Tasky App Demo"/>
+  <img src="https://raw.githubusercontent.com/menna3lwan/tasky_app/main/Taskatkgif.gif" width="350" alt="Tasky App Demo"/>
 </p>
 
 ---
